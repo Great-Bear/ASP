@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace ASP
+namespace DevOpsBasics
 {
     public class Program
     {
@@ -24,3 +24,5 @@ namespace ASP
                 });
     }
 }
+// from site
+// from VS

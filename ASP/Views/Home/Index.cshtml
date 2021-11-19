@@ -1,8 +1,71 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Домашняя";
 }
 
 <div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+    <h1 class="display-4">Publish demo</h1>
+    <p>
+        Публикация проекта ASP на Azure
+    </p>
+    <h2>Хранение данных: файлы или БД?</h2>
+    <table border="1" cellspacing="0">
+        <tr>
+            <th></th>
+            <th>Файл</th>
+            <th>БД</th>
+        </tr>
+        <tr>
+            <td>Скорость доступа (получения данных)</td>
+            <td>Выше, значительно</td>
+            <td>Ниже, требуется авторизация и передача данных</td>
+        </tr>
+        <tr>
+            <td>Надежность, защищенность</td>
+            <td>Ниже, ограничено правами пользователя ОС</td>
+            <td>Выше, пользователи авторизуются дополнительно + данные шифруются</td>
+        </tr>
+        <tr>
+            <td>Выборка и поиск</td>
+            <td>Требуется самостоятельная реализация</td>
+            <td>Содержится в СУБД</td>
+        </tr>
+        <tr>
+            <td>Совместная работа</td>
+            <td>Практически нет</td>
+            <td>Полная поддержка</td>
+        </tr>
+    </table>
+    <p>
+        Вывод: файлы имеют преимущество при "отсоединенной" работе
+        (не совместной) с небольшими данными, не требующими персонализации
+        или защиты.
+    </p>
+    <form action="/Home/UserOpinion" class="container m-4" method="post">
+        <div class="row">
+            <b class="col">Ник:</b>
+            <input class="col" name="Usernik" />
+        </div>
+        <div class="row m-4">
+            <b class="col">Ваше мнение:</b>
+            <input class="col" name="Comment" />
+        </div>
+        <div class="row m-4">
+            <b class="col">Ваше имя:</b>
+            <input class="col" name="Authorname" />
+        </div>
+
+        <input type="submit" class="btn btn-primary" value="Отправить" />
+    </form>
+
+    <div class="comments m-4">
+  
+         @if (ViewData["CommentsObjects"] != null)
+         @foreach (Opinion com in (List<Opinion>)ViewData["CommentsObjects"])
+            {
+
+        <p>@com.Moment.Hour:@com.Moment.Minute:@com.Moment.Second:  <b>@com.Authorname</b>  "@com.Comment"</p>
+            
+        }
+
+    </div>
 </div>

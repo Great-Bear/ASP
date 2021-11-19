@@ -1,6 +1,6 @@
 using System;
 
-namespace ASP.Models
+namespace DevOpsBasics.Models
 {
     public class ErrorViewModel
     {
