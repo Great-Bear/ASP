@@ -63,9 +63,14 @@
          @foreach (Opinion com in (List<Opinion>)ViewData["CommentsObjects"])
             {
 
-        <p>@com.Moment.Hour:@com.Moment.Minute:@com.Moment.Second:  <b>@com.Authorname</b>  "@com.Comment"</p>
-            
-        }
+        <p>
+
+            @com.GetOpinionInfo();
+
+
+        </p>
+
+             }
 
     </div>
 </div>

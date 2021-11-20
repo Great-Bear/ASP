@@ -35,7 +35,7 @@ namespace DevOpsBasics.Controllers
                     (reader.ReadToEnd());
 
                 ViewData["CommentsObjects"] = opinions;
-
+                
                 foreach (var specificOpinions in opinions)
                 {
                     comments.Add(specificOpinions.Comment);
@@ -47,6 +47,7 @@ namespace DevOpsBasics.Controllers
                 comments = null;
             }
             ViewData["Comments"] = comments?.ToArray();
+           
             return View();
         }
 
