@@ -49,28 +49,17 @@
             <b class="col">Ваше мнение:</b>
             <input class="col" name="Comment" />
         </div>
-        <div class="row m-4">
-            <b class="col">Ваше имя:</b>
-            <input class="col" name="Authorname" />
-        </div>
 
         <input type="submit" class="btn btn-primary" value="Отправить" />
     </form>
 
+    @ViewData["Mode"]
+
     <div class="comments m-4">
-  
-         @if (ViewData["CommentsObjects"] != null)
-         @foreach (Opinion com in (List<Opinion>)ViewData["CommentsObjects"])
+        @if (ViewData["Comments"] != null)
+            @foreach (var com in (DevOpsBasics.Models.Opinion[])ViewData["Comments"])
             {
-
-        <p>
-
-            @com.GetOpinionInfo();
-
-
-        </p>
-
-             }
-
+        <b>@com.Usernik :</b> <i>@com.Comment</i><br/>
+            }
     </div>
 </div>
