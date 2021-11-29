@@ -1,0 +1,69 @@
+﻿
+@{
+    ViewData["Title"] = "Переводчик";
+}
+<h1>Cлужбы данных Azure на примере No-SQL CosmosDB</h1>
+
+@if (ViewData["errorMessage"]?.ToString() != String.Empty)
+{
+<p style="color:darkred">@ViewData["errorMessage"]</p>
+}
+else
+{
+<p>"Сравнительный анализ SQL и NoSQL Баз данных"</p>
+<table>
+    <tr>
+        <th>SQL</th>
+        <th>NoSQL</th>
+    </tr>
+    @for(int i = 0; i < ((DevOpsBasics.Controllers.UserOpinion[])ViewData["opinionsSQL"]).Length ||
+                    i < ((DevOpsBasics.Controllers.UserOpinion[])ViewData["opinionsNoSQL"]).Length ; i++)
+    {
+    <tr>
+        <td>
+            @if(i < ((DevOpsBasics.Controllers.UserOpinion[])ViewData["opinionsSQL"]).Length)
+            {
+            @( ((DevOpsBasics.Controllers.UserOpinion[])ViewData["opinionsSQL"])[i].comment )
+            }
+        </td>
+        <td>
+            @if(i < ((DevOpsBasics.Controllers.UserOpinion[])ViewData["opinionsNoSQL"]).Length)
+            {
+            @(  ((DevOpsBasics.Controllers.UserOpinion[])ViewData["opinionsNoSQL"])[i].comment )
+            }
+        </td>
+    </tr>
+    }
+
+</table>
+<b>General</b>
+@foreach(var opinion in (DevOpsBasics.Controllers.UserOpinion[])ViewData["opinionsGeneral"])
+        {
+            <p>@opinion.date: @opinion.comment </p>
+        }
+}
+<form method="post" action="/Home/CosmosOpinion">
+    <b>Text: </b><input name="comment"type="text" id="comment" />  <br />
+    <select name="group">
+        <option selected value="1">NoSQL</option>
+        <option selected value="0">Общий</option>
+        <option selected value="-1">SQL</option>
+    </select>
+    <button id="addOpinion" onclick="return isValidForm(this);">Add</button>
+</form>
+
+<!--
+    Задание:
+    Организовать таблицу "Сравнительный анализ SQL и NoSQL Баз данных"
+    Две колонки (в таблице) + общие (ниже таблицы) = 3 группы комментариев
+    - о SQL
+    - о NoSQL
+    - без привязки - общий
+    В форме комментариев добавить выбор радиокнопками/селектором
+
+    Комментарии хранятся в БД
+    Перед добавлением в БД проверить не-пустоту сообщений
+    Добавить дату-время
+    Использовать существующую БД, игнорировать записи, не содержащие
+    нужной информации (старые записи)
+-->

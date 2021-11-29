@@ -1,4 +1,6 @@
-﻿@{ ViewData["Title"] = "Переводчик"; }
+﻿@{
+    ViewData["Title"] = "Переводчик";
+}
 <h1>Когнитивные службы Azure на примере переводчика</h1>
 <p>Создание службы</p>
 <ol>
@@ -53,18 +55,6 @@
     Текст для перевода (EN) <input value="Hello, world!" name="txt" />
     <br />
     <button>Перевести</button>
-    C
-    <select id="translateFrom" name="translateFrom">
-        <option value="en" selected>Английский</option>
-        <option value="uk">Украинский</option>
-        <option value="ru">Русский</option>
-    </select>
-    На
-    <select id="translateTo" name="translateTo">
-        <option value="en">Английский</option>
-        <option value="uk" selected>Украинский</option>
-        <option value="ru" selected >Русский</option>
-    </select>
 </form>
 
 <p>
@@ -101,69 +91,47 @@
 <p id="targetText"></p>
 
 <script>
+document.addEventListener("DOMContentLoaded",
+    function () {
+        const btnTranslate = document.getElementById("btnTranslate");
+        if (!btnTranslate) throw "btnTranslate not found";
+        btnTranslate.onclick = function () {
+            const sourceLang = document.getElementById("sourceLang");
+            if (!sourceLang) throw "sourceLang not found";
+            const sourceText = document.getElementById("sourceText");
+            if (!sourceText) throw "sourceText not found";
+            const targetLang = document.getElementById("targetLang");
+            if (!targetLang) throw "targetLang not found";
+            const targetText = document.getElementById("targetText");
+            if (!targetText) throw "targetText not found";
 
-    function translate(e) {
-        let startSelection = window.getSelection().anchorOffset;
-        let endSelection = window.getSelection().extentOffset;
+            const sLang = sourceLang.value;
+            const tLang = targetLang.value;
+            const sText = sourceText.value;
 
-        if (e.target.id != "btnTranslate" && startSelection == endSelection) {
+            console.log(sLang, tLang, sText);
+            /*
+            let res = await fetch("/Home/ApiKey").then(r=>r.text());
+            console.log(res);
             return;
-        }
-
-        const sourceLang = document.getElementById("sourceLang");
-        if (!sourceLang) throw "sourceLang not found";
-        const sourceText = document.getElementById("sourceText");
-        if (!sourceText) throw "sourceText not found";
-        const targetLang = document.getElementById("targetLang");
-        if (!targetLang) throw "targetLang not found";
-        const targetText = document.getElementById("targetText");
-        if (!targetText) throw "targetText not found";
-
-        const sLang = sourceLang.value;
-        const tLang = targetLang.value;
-        let sText = sourceText.value;
-      
-      
-        if (startSelection != endSelection) {
-            sText = window.getSelection().extentNode.data.substring(startSelection, endSelection);
-        }
-       
-
-        console.log(sLang, tLang, sText);
-        /*
-        let res = await fetch("/Home/ApiKey").then(r=>r.text());
-        console.log(res);
-        return;
-        */
-        fetch("/Home/ApiKey")
-            .then(r => r.json())
-            .then(obj => {
-                const endpoint = `https://api.cognitive.microsofttranslator.com/translate?api-version=3.0&from=${sLang}&to=${tLang}`;
-                const data = JSON.stringify([{ "Text": sText }]);
-                try {
+            */
+            fetch("/Home/ApiKey")
+                .then(r => r.text())
+                .then(key => {
+                    const endpoint = `https://api.cognitive.microsofttranslator.com/translate?api-version=3.0&from=${sLang}&to=${tLang}`;
+                    const region = "global";
+                    const data = JSON.stringify([{ "Text": sText }]);
                     fetch(endpoint, {
                         method: "POST",
                         headers: {
                             "Content-Type": "application/json; charset=UTF-8",
                             "Content-Length": data.length,
-                            "Ocp-Apim-Subscription-Key": obj.Key,
-                            "Ocp-Apim-Subscription-Region": obj.Region
+                            "Ocp-Apim-Subscription-Key": key,
+                            "Ocp-Apim-Subscription-Region": region
                         },
                         body: data
-                    }).then(r => r.json()).then((resp) => { if (resp[0].text != 0) console.log(resp[0].translations[0].text) });
-                }
-                catch (err) {
-                    alert("Error the ability to convert is currently unavailable :(");
-                }
-            });
-    }
-    
-
-    document.addEventListener("DOMContentLoaded",
-        function () {
-            const btnTranslate = document.getElementById("btnTranslate");
-            if (!btnTranslate) throw "btnTranslate not found";
-            btnTranslate.onclick = translate;
-        });
-    document.body.onmouseup = translate;
+                    }).then(r => r.json()).then(console.log);
+                });
+        }
+    });
 </script>

@@ -9,6 +9,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Text.Json;
 using System.Net.Http;
+using Microsoft.Azure.Cosmos;
+using System.ComponentModel.DataAnnotations;
 
 namespace DevOpsBasics.Controllers
 {
@@ -59,20 +61,9 @@ namespace DevOpsBasics.Controllers
 
         public IActionResult Translate()
         {
-            String translateFrom = Request.Query["originLang"].ToString();
-            if (String.IsNullOrEmpty(translateFrom))
-            {
-                translateFrom = "en";
-            }
-            String translateTo = Request.Query["translateTo"].ToString();
-            if (String.IsNullOrEmpty(translateTo))
-            {
-                translateTo = "uk";
-            }
-
             String endpoint = @"https://api.cognitive.microsofttranslator.com";
             String key = "8eeadf9d8a7040f3920fa56c6abbff1b";
-            String path = $"/translate?api-version=3.0&from={translateFrom}&to={translateTo}";
+            String path = "/translate?api-version=3.0&from=en&to=uk&to=ru";
             String region = "global";
             String txt = Request.Query["txt"].ToString();
             if(txt.Length == 0)
@@ -106,8 +97,7 @@ namespace DevOpsBasics.Controllers
                 .Deserialize<Translations[]>(resp);
             ViewData["ukTranslation"] = "";
             ViewData["ruTranslation"] = "";
-            
-            foreach (var obj in json)
+            foreach(var obj in json)
             {
                 foreach(var trans in obj.translations)
                 {
@@ -122,8 +112,125 @@ namespace DevOpsBasics.Controllers
 
         public IActionResult ApiKey()
         {
-            return Content("{ \"Key\": \"8eeadf9d8a7040f3920fa56c6abbff1b\"," +
-                              "\"Region\": \"global\" }");
+            return Content("8eeadf9d8a7040f3920fa56c6abbff1b");
+        }
+       
+        #region config
+        String EndpointUri = "https://cosmosbdazure.documents.azure.com:443/";
+        String PrimaryKey = "P5YORmwhxdQ7dCAwONUeWcejzi6IkqcOl3fFde8rBi3v77bBUKS2J4cFCcvZLrzmMdHF82lzx05AyeVSmLZfUw==";
+        #endregion
+        private CosmosClient cosmosClient;
+        private Database database;
+        private Container container;
+        private String databaseId = "Opinion";
+        private String containerId = "opinionContainer";
+
+        public async Task<IActionResult> Cosmos()
+        {
+            String errorMessage = String.Empty;
+            try
+            {
+                cosmosClient = new CosmosClient(EndpointUri, PrimaryKey);
+                database = cosmosClient.GetDatabase(databaseId);  // await .CreateDatabaseIfNotExistsAsync(databaseId);
+                container = database.GetContainer(containerId);
+                // content = "OK ";
+                var sqlQueryText = "SELECT * FROM c ";
+                QueryDefinition queryDefinition = new QueryDefinition(sqlQueryText);
+                FeedIterator<UserOpinion> queryResultSetIterator = 
+                    container.GetItemQueryIterator<UserOpinion>(queryDefinition);
+                List<UserOpinion> opinionsGeneral = new List<UserOpinion>();
+                List<UserOpinion> opinionsSQL = new List<UserOpinion>();
+                List<UserOpinion> opinionsNoSQL = new List<UserOpinion>();
+                while (queryResultSetIterator.HasMoreResults)
+                {
+                    FeedResponse<UserOpinion> currentResultSet = 
+                        await queryResultSetIterator.ReadNextAsync();
+                    foreach (UserOpinion opinion in currentResultSet)
+                    {
+                        if(opinion.group == 0)
+                        {
+                             opinionsGeneral.Add(opinion);
+                        }
+                        else if(opinion.group == 1)
+                        {
+                            opinionsNoSQL.Add(opinion);
+                        }
+                        else if(opinion.group == -1)
+                        {
+                            opinionsSQL.Add(opinion);
+                        }
+                        else 
+                        {
+                            opinionsGeneral.Add(opinion);
+                        }                  
+                    }
+                }
+                ViewData["opinionsGeneral"] = opinionsGeneral.ToArray();
+                ViewData["opinionsNoSQL"] = opinionsNoSQL.ToArray();
+                ViewData["opinionsSQL"] = opinionsSQL.ToArray();
+               
+            }
+            catch (CosmosException de)
+            {
+                Exception baseException = de.GetBaseException();
+                errorMessage = String.Format("{0} error occurred: {1}", de.StatusCode, de);
+            }
+            catch (Exception e)
+            {
+                errorMessage = String.Format("Error: {0}", e);
+            }
+
+            ViewData["errorMessage"] = errorMessage;
+
+            return View();  //  Content(content);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> CosmosOpinion(UserOpinion opinion)
+        {
+            cosmosClient = new CosmosClient(EndpointUri, PrimaryKey);
+            database = cosmosClient.GetDatabase(databaseId);  // await .CreateDatabaseIfNotExistsAsync(databaseId);
+            container = database.GetContainer(containerId);
+            // content = "OK ";
+            var sqlQueryText = $"SELECT * FROM c WHERE c.comment = \"{opinion.comment}\"";
+            QueryDefinition queryDefinition = new QueryDefinition(sqlQueryText);
+            FeedIterator<UserOpinion> queryResultSetIterator =
+                container.GetItemQueryIterator<UserOpinion>(queryDefinition);          
+            if (queryResultSetIterator.ReadNextAsync().Result.Count > 1)
+            {
+                return Content("Такой комментарий уже существует");
+            }
+
+
+               
+           if(opinion.comment.Length == 0)
+            {
+                return Content("Поле не может быть пустым");
+            }
+            String errorMessage = String.Empty;
+            opinion.id = Guid.NewGuid().ToString();
+            try
+            {
+                cosmosClient = new CosmosClient(EndpointUri, PrimaryKey);
+                database = cosmosClient.GetDatabase(databaseId);  // await .CreateDatabaseIfNotExistsAsync(databaseId);
+                container = database.GetContainer(containerId);
+                ItemResponse<UserOpinion> result =
+                    await container.CreateItemAsync(opinion);
+
+                return Content(result.StatusCode.ToString() + " " + 
+                    result.Resource);
+            }
+            catch (CosmosException de)
+            {
+                Exception baseException = de.GetBaseException();
+                errorMessage = String.Format("{0} error occurred: {1}", de.StatusCode, de);
+            }
+            catch (Exception e)
+            {
+                errorMessage = String.Format("Error: {0}", e);
+
+            }
+            return Content(errorMessage);
         }
 
         [HttpPost]
@@ -163,6 +270,20 @@ namespace DevOpsBasics.Controllers
         public IActionResult Error()
         {
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        }
+    }
+
+    public class UserOpinion
+    {
+        public String id { get; set; }
+        public DateTime date { get; set; } = DateTime.Now;
+        [Required]
+        [Display(Name = "Название")]
+        public String comment { get; set; }
+        public int? group { get; set; }
+        public override string ToString()
+        {
+            return String.Format("{0}: {1}", comment,  id);
         }
     }
 
